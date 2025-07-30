@@ -1,4 +1,5 @@
 import { useUserStore } from "~/stores/user";
+import { apiRoutes } from "~/utils/apiRoutes";
 
 export async function useSafeFetch<T>(url: string, options: any = {}) {
   const baseURL = useRuntimeConfig().public.apiBase;
@@ -21,7 +22,7 @@ export async function useSafeFetch<T>(url: string, options: any = {}) {
     if (isCsrfError) {
       try {
         console.warn('CSRF failed — attempting to refresh CSRF token...');
-        await $fetch('/auth/nuxt/csrf/', {
+        await $fetch(apiRoutes.auth.csrf, {
           baseURL,
           credentials: 'include',
         });
@@ -41,7 +42,7 @@ export async function useSafeFetch<T>(url: string, options: any = {}) {
     // Check if the error is an authentication error
     if (status === 401) {
       try {
-        await $fetch("/auth/nuxt/refresh/", {
+        await $fetch(apiRoutes.auth.refresh, {
           method: "POST",
           baseURL,
           credentials: "include", // 帶 refresh token cookie

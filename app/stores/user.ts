@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { apiRoutes } from '~/utils/apiRoutes'
 
 type User = {
   pk: number
@@ -10,13 +11,13 @@ export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
 
   const login = async (username: string, password: string) => {
-    await $fetch('/auth/nuxt/csrf/', {
+    await $fetch(apiRoutes.auth.csrf, {
       method: 'GET',
       baseURL: useRuntimeConfig().public.apiBase,
       credentials: 'include',
     })
 
-    const response = await $fetch<{ detail: string, user: User }>('/auth/nuxt/login/', {
+    const response = await $fetch<{ detail: string, user: User }>(apiRoutes.auth.login, {
       method: 'POST',
       baseURL: useRuntimeConfig().public.apiBase,
       body: { username, password },
@@ -30,7 +31,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const logout = async () => {
-    await $fetch('/auth/nuxt/logout/', {
+    await $fetch(apiRoutes.auth.logout, {
       method: 'POST',
       baseURL: useRuntimeConfig().public.apiBase,
       credentials: 'include',
