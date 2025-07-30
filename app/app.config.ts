@@ -21,10 +21,5 @@ export default defineAppConfig({
       // Web App Manifest
       { rel: 'manifest', href: '/site.webmanifest' }
     ],
-    meta: [
-      // Theme colors for mobile browsers
-      { name: 'theme-color', content: '#000000' },
-      { name: 'msapplication-TileColor', content: '#000000' }
-    ]
   }
 })
