@@ -4,5 +4,10 @@ export const apiRoutes = {
     login: '/auth/login/',
     logout: '/auth/logout/',
     refresh: '/auth/refresh/'
-  }
+  },
+  product: {
+    categories: {
+      tree: '/products/categories/tree/',
+    },
+  },
 }
