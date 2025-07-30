@@ -1,7 +1,8 @@
 <template>
-  <div class="flex h-screen flex-1">
-    <NuxtRouteAnnouncer />
-  </div>
+  <NuxtRouteAnnouncer />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
 
 <script setup lang="ts"></script>
