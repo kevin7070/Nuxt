@@ -12,12 +12,6 @@ const meta = ref({
   og_type: "website",
 });
 
-// TODO
-const { metaRes } = await useSafeFetch<any>("/api/page-meta/index");
-if (metaRes.value) {
-  meta.value = metaRes.value;
-}
-
 useHead({
   title: () => meta.value.title,
   meta: [
