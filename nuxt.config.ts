@@ -26,4 +26,11 @@ export default defineNuxtConfig({
       sourcemap: false,
     },
   },
+
+  components: [
+    '~/components',
+    { path: '~/components/global', prefix: 'Global' },
+    { path: '~/components/account', prefix: 'Account' },
+    { path: '~/components/product', prefix: 'Product' }
+  ]
 });
