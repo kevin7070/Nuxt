@@ -3,7 +3,7 @@
 _.env.development_
 
 ```
-NUXT_PUBLIC_API_BASE_URL=your-public-api-base-url
+NUXT_PUBLIC_API_BASE_URL=http://localhost:8000
 NUXT_ENV_MODE=development
 ```
 
