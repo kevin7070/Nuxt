@@ -58,7 +58,7 @@ export async function useSafeFetch<T>(
         return await useSafeFetch<T>(url, { ...options, _csrfRetried: true });
       } catch (e) {
         console.error("Failed to refresh CSRF. Logging out.");
-        await userStore.logout();
+        userStore.logout();
         throw e;
       }
     }
@@ -70,7 +70,7 @@ export async function useSafeFetch<T>(
         return await useSafeFetch<T>(url, { ...options, _authRetried: true });
       } catch (e) {
         console.error("Failed to refresh token. Logging out...");
-        await userStore.logout();
+        userStore.logout();
         throw e;
       }
     }

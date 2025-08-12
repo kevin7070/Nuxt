@@ -30,8 +30,8 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  const logout = async () => {
-    await $fetch(apiRoutes.auth.logout, {
+  const logout = () => {
+    $fetch(apiRoutes.auth.logout, {
       method: 'POST',
       baseURL: useRuntimeConfig().public.apiBase,
       credentials: 'include',
