@@ -1,65 +1,81 @@
 import { useUserStore } from "~/stores/user";
 import { apiRoutes } from "~/utils/apiRoutes";
 
-export async function useSafeFetch<T>(url: string, options: any = {}) {
+// Single-flight lock for refresh so concurrent 401s don't trigger multiple refresh calls
+let tokenRefreshPromise: Promise<void> | null = null;
+
+function refreshToken(baseURL: string) {
+  if (!tokenRefreshPromise) {
+    tokenRefreshPromise = $fetch(apiRoutes.auth.refresh, {
+      method: "POST",
+      baseURL,
+      credentials: "include",
+    })
+      .then(() => {
+        // no-op; just ensure the promise resolves for waiters
+      })
+      .finally(() => {
+        tokenRefreshPromise = null;
+      });
+  }
+  return tokenRefreshPromise;
+}
+
+function fetchCsrf(baseURL: string) {
+  return $fetch(apiRoutes.auth.csrf, {
+    baseURL,
+    credentials: "include",
+  });
+}
+
+function isCsrfError(err: any) {
+  const status = err?.response?.status ?? err?.status;
+  const detail = err?.response?.data?.detail ?? err?.data?.detail ?? "";
+  return status === 403 && typeof detail === "string" && detail.toLowerCase().includes("csrf");
+}
+
+export async function useSafeFetch<T>(
+  url: string,
+  options: (RequestInit & { _csrfRetried?: boolean; _authRetried?: boolean }) | any = {}
+) {
   const baseURL = useRuntimeConfig().public.apiBase;
   const userStore = useUserStore();
 
   try {
     return await $fetch<T>(url, {
       baseURL,
-      credentials: 'include',
+      credentials: "include",
       ...options,
     });
   } catch (err: any) {
-    const status = err.response?.status;
+    const status = err?.response?.status ?? err?.status;
 
-    // Check if the error is a CSRF error 
-    const isCsrfError = status === 403 &&
-      err.response?.data?.detail?.toLowerCase().includes('csrf');
-
-    // If it is a CSRF error, try to refresh the CSRF token
-    if (isCsrfError) {
+    // ---- CSRF: retry once ----
+    if (!options._csrfRetried && isCsrfError(err)) {
       try {
-        console.warn('CSRF failed — attempting to refresh CSRF token...');
-        await $fetch(apiRoutes.auth.csrf, {
-          baseURL,
-          credentials: 'include',
-        });
-        // Retry original request
-        return await $fetch<T>(url, {
-          baseURL,
-          credentials: 'include',
-          ...options,
-        });
-      } catch (err) {
-        console.error("Failed to refresh CSRF")
+        console.warn("CSRF failed — refreshing token and retrying once…");
+        await fetchCsrf(baseURL);
+        return await useSafeFetch<T>(url, { ...options, _csrfRetried: true });
+      } catch (e) {
+        console.error("Failed to refresh CSRF. Logging out.");
         await userStore.logout();
-        throw err;
+        throw e;
       }
     }
 
-    // Check if the error is an authentication error
-    if (status === 401) {
+    // ---- Auth: 401 -> refresh (single-flight) then retry once ----
+    if (!options._authRetried && status === 401) {
       try {
-        await $fetch(apiRoutes.auth.refresh, {
-          method: "POST",
-          baseURL,
-          credentials: "include", // 帶 refresh token cookie
-        });
-        console.log("Token refreshed. Retrying original request...");
-        // Retry original request
-        return await $fetch<T>(url, {
-          baseURL,
-          credentials: 'include',
-          ...options,
-        });
-      } catch (err) {
+        await refreshToken(baseURL);
+        return await useSafeFetch<T>(url, { ...options, _authRetried: true });
+      } catch (e) {
         console.error("Failed to refresh token. Logging out...");
         await userStore.logout();
-        throw err;
+        throw e;
       }
     }
+
+    // Pass through unhandled errors
     throw err;
   }
 }
